@@ -3,7 +3,6 @@ import { ApiError } from "../utils/apiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/apiResponse.js"
-import { response } from "express"
 
 const registerUser = asyncHandler(async(req, res) => {
     const { fullName, email, username, password } = req.body
@@ -21,16 +20,16 @@ const registerUser = asyncHandler(async(req, res) => {
     const avatarLocalPath = req.files?.avatar[0]?.path
     const coverImageLocalPath = req.files?.coverImage[0]?.path
 
-    if(!avatarLocalPath){
-        throw new ApiError(400, "avatar is required")
-    }
+    // if(!avatarLocalPath){
+    //     throw new ApiError(400, "avatar is required")
+    // }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if(!avatar){
-        throw new ApiError(400, "Avatar file is required")
-    }
+    // if(!avatar){
+    //     throw new ApiError(400, "Avatar file is required")
+    // }
     const user = await User.create({
         fullName,
         avatar: avatar?.url || "",
