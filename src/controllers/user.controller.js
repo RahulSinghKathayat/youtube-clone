@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/apiResponse.js"
 
-const generateRefreshAndAccessToken = async(userId) => {
+const generateAccessAndRefereshTokens = async(userId) => {
     try{
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
@@ -16,6 +16,7 @@ const generateRefreshAndAccessToken = async(userId) => {
         return {accessToken, refreshToken}
 
     }catch(error){
+        console.log("error generating the tokens: ", error)
         throw new ApiError(500, "something went wrong while generating the refresh and access token")
     }
 }
@@ -91,7 +92,7 @@ const loginUser = asyncHandler(async(req, res) => {
         throw new ApiError(401, "password is error")
     }
 
-    const {accessToken, refreshToken} = await generateRefreshAndAccessToken(user._id)
+    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
 
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
@@ -101,16 +102,16 @@ const loginUser = asyncHandler(async(req, res) => {
         httpOnly: true,
         secure: true
         }
-        return res.status(200).cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(
-                200,{
-                    user: loggedInUser, accessToken, refreshToken
-                }, 
-                "user loggedIn successfully"
-            )
+    return res.status(200).cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,{
+                user: loggedInUser, accessToken, refreshToken
+            }, 
+            "user loggedIn successfully"
         )
+    )
 })
 
 
@@ -131,8 +132,8 @@ const logoutUser = asyncHandler(async(req, res) => {
         secure: true
     }
 
-    res.status(200).cookie("accessToken", options)
-    .cookie("refreshToken", options)
+    return res.status(200).clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "user loggedout"))
 })
 
