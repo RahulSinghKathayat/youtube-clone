@@ -3,14 +3,12 @@ import { ApiError } from "../utils/apiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/apiResponse.js"
-import jwt from "jsonwebtoken"
-import mongoose from "mongoose"
 
 const generateRefreshAndAccessToken = async(userId) => {
     try{
         const user = await User.findById(userId)
-        const refreshToken = user.generateRefreshToken()
         const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
@@ -73,6 +71,7 @@ const registerUser = asyncHandler(async(req, res) => {
 
 const loginUser = asyncHandler(async(req, res) => {
     const { username, email, password } = req.body
+    console.log(email)
 
     if(!username && !email){
         throw new ApiError(400, "username or email is required")
@@ -108,18 +107,19 @@ const loginUser = asyncHandler(async(req, res) => {
             new ApiResponse(
                 200,{
                     user: loggedInUser, accessToken, refreshToken
-                }, "user loggedIn successfully"
+                }, 
+                "user loggedIn successfully"
             )
         )
 })
 
 
 const logoutUser = asyncHandler(async(req, res) => {
-    User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1
             }
         },{
             new: true
@@ -131,9 +131,9 @@ const logoutUser = asyncHandler(async(req, res) => {
         secure: true
     }
 
-    res.status(200).cookie("refreshToken", refreshToken, options)
-    .cookie("accessToken", accessToken, options)
-    .json(new ApiResponse(200), {}, "user loggedout")
+    res.status(200).cookie("accessToken", options)
+    .cookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "user loggedout"))
 })
 
 export { 
